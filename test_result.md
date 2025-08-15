@@ -102,6 +102,106 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
+user_problem_statement: |
+  Clone the target repository locally before starting:
+  git clone https://github.com/Airocult/mix.git
+  
+  Details:
+  I have two GitHub repositories:
+  Working reference project (do not clone, just use as code reference): https://github.com/Airocult/circu.git
+  Target project to fix and finalize (clone this one): https://github.com/Airocult/mix.git
+  
+  Both have the same core functionality concept.
+  
+  Task:
+  In the mix project, locate the parts of the code that handle component rendering and Fritzing part logic (SVG loading, part placement, and pin rendering). Replace these sections with the equivalent logic from the working circu project, so that:
+  Components load exactly as in circu (no extra box/border).
+  Pins are rendered correctly and fully functional for connections.
+  All component interaction behavior from circu works in mix.
+  
+  Important Instructions:
+  Use the existing folder and file structure in mix.
+  Replace only the relevant code for component rendering/Fritzing part handling with the circu logic.
+  Do not spend time testing — focus solely on fixing the code so it matches the circu behavior.
+  After replacement, ensure the final code is ready for the next stage of integration or testing.
+
+frontend:
+  - task: "Component Rendering Fix - Remove Extra Borders"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/circuit/CanvasArea.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Replaced ComponentInstance function with working circu version. Removed complex SVG dimension tracking, simplified pin positioning logic, and removed over-engineered fallback handling that was causing extra borders around components."
+
+  - task: "Pin Rendering and Positioning Fix"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/circuit/CanvasArea.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Simplified pin positioning calculation using cleaner scaling logic from circu. Fixed pin coordinate calculation for proper wire connections. Removed conditional validation that was skipping valid pins."
+
+  - task: "Wire Connection Simplification"
+    implemented: true
+    working: "needs_testing"
+    file: "/app/frontend/src/circuit/CanvasArea.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Replaced complex wire routing logic with simpler direct wire creation from circu. Removed WireRouter complexity that was causing connection issues. Simplified handlePinClick function for better reliability."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Component Rendering Fix - Remove Extra Borders"
+    - "Pin Rendering and Positioning Fix"
+    - "Wire Connection Simplification"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Successfully cloned mix repository and analyzed the differences between the problematic mix code and working circu code. 
+      
+      Key issues identified and fixed:
+      1. ComponentInstance had over-engineered SVG dimension tracking causing rendering problems
+      2. Complex pin positioning logic with unnecessary validation was breaking pin functionality
+      3. Wire routing used complex WireRouter that caused connection issues
+      
+      Changes made:
+      - Replaced ComponentInstance function entirely with working circu version
+      - Simplified pin positioning using direct scaling calculation
+      - Removed complex SVG dimension state management
+      - Simplified wire creation without complex routing
+      - Fixed pin click coordinate calculation
+      
+      The code should now render components without extra borders and have fully functional pin connections matching circu behavior.
+      
+      Ready for testing to verify that:
+      1. Components load cleanly without extra boxes/borders
+      2. Pins are rendered correctly and clickable
+      3. Wire connections work properly between pins
+      4. All component interactions match circu behavior
+
 user_problem_statement: Merge CircuitDesigner (circuit design tool) into Arduino-editor (code editor) so that:
   - Only one single combined project exists (no separate apps, no separate servers)
   - Everything runs from within the Arduino-editor folder

@@ -239,15 +239,11 @@ export function CanvasArea({ canvasState, onStateChange, onSelectElement, select
   }, [frameStart, frameEnd, canvasState]);
 
   const handlePinClick = useCallback((componentId: string, pinId: string, x: number, y: number) => {
-    // Ensure coordinates are properly scaled according to zoom level
-    const adjustedX = x;
-    const adjustedY = y;
-    
     if (!isDrawingWire) {
       // Start new wire
       setIsDrawingWire(true);
-      setWireStart({ componentId, pinId, x: adjustedX, y: adjustedY });
-      setCurrentWirePath([{ x: adjustedX, y: adjustedY }]);
+      setWireStart({ componentId, pinId, x, y });
+      setCurrentWirePath([{ x, y }]);
     } else if (wireStart) {
       // Complete wire connection
       const newWire = {
@@ -256,25 +252,13 @@ export function CanvasArea({ canvasState, onStateChange, onSelectElement, select
         startPin: wireStart.pinId,
         endComponent: componentId,
         endPin: pinId,
-        path: [...currentWirePath, { x: adjustedX, y: adjustedY }],
+        path: [...currentWirePath, { x, y }],
         color: wireColor
-      };
-      
-      // Use wire router to create a proper path with right angles
-      const routedPath = wireRouter.current.routePath(
-        currentWirePath[0], 
-        { x: adjustedX, y: adjustedY },
-        currentWirePath.slice(1, -1)
-      );
-      
-      const finalWire = {
-        ...newWire,
-        path: routedPath || newWire.path
       };
       
       const newState = {
         ...canvasState,
-        wires: [...canvasState.wires, finalWire]
+        wires: [...canvasState.wires, newWire]
       };
       
       onStateChange(newState);
@@ -284,7 +268,7 @@ export function CanvasArea({ canvasState, onStateChange, onSelectElement, select
       setWireStart(null);
       setCurrentWirePath([]);
     }
-  }, [isDrawingWire, wireStart, currentWirePath, canvasState, onStateChange, wireColor]);
+  }, [isDrawingWire, wireStart, currentWirePath, canvasState, onStateChange]);
 
   const handleCanvasRightClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

@@ -554,9 +554,6 @@ function ComponentInstance({ placedComponent, onMove, onPinClick, onSelect, isSe
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [componentData, setComponentData] = useState<Component | null>(null);
-  const [svgDimensions, setSvgDimensions] = useState({ width: 72, height: 93.6 });
-  const imgRef = useRef<HTMLImageElement>(null);
-  const componentRef = useRef<HTMLDivElement>(null);
 
   // Fetch component data
   const { data: components = [] } = useQuery<Component[]>({
@@ -567,17 +564,6 @@ function ComponentInstance({ placedComponent, onMove, onPinClick, onSelect, isSe
     const component = components.find(c => c.id === placedComponent.componentId);
     setComponentData(component || null);
   }, [components, placedComponent.componentId]);
-
-  // Get actual SVG dimensions when image loads
-  const handleImageLoad = useCallback(() => {
-    if (imgRef.current) {
-      const img = imgRef.current;
-      // Use natural dimensions if available, otherwise use rendered dimensions
-      const width = img.naturalWidth || img.width || 72;
-      const height = img.naturalHeight || img.height || 93.6;
-      setSvgDimensions({ width, height });
-    }
-  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button === 0) { // Left mouse button
@@ -612,14 +598,10 @@ function ComponentInstance({ placedComponent, onMove, onPinClick, onSelect, isSe
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // We're using direct DOM position for pin coordinates instead of calculating with rotation
-
-
   const connectors = Array.isArray(componentData?.connectors) ? componentData.connectors : [];
 
   return (
     <div
-      ref={componentRef}
       className={`absolute cursor-move ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
       style={{
         left: placedComponent.x,
@@ -631,12 +613,20 @@ function ComponentInstance({ placedComponent, onMove, onPinClick, onSelect, isSe
       <div className="relative">
         {/* Component Breadboard Image */}
         <img
-          ref={imgRef}
+          ref={(img) => {
+            if (img) {
+              // Store the actual rendered dimensions for pin scaling
+              img.onload = () => {
+                const rect = img.getBoundingClientRect();
+                img.dataset.renderWidth = rect.width.toString();
+                img.dataset.renderHeight = rect.height.toString();
+              };
+            }
+          }}
           src={`/api/components/${placedComponent.componentId}/svg/breadboard`}
           alt={componentData?.title || "Component"}
           className="max-w-none"
           style={{ width: '64px', height: 'auto' }}
-          onLoad={handleImageLoad}
           onError={(e) => {
             // Fallback to simple shape if SVG fails to load
             const target = e.target as HTMLImageElement;
@@ -649,20 +639,14 @@ function ComponentInstance({ placedComponent, onMove, onPinClick, onSelect, isSe
                 </div>
               `;
             }
-            // Set default dimensions for fallback
-            setSvgDimensions({ width: 64, height: 64 });
           }}
         />
 
         {/* Dynamic Connection Pins based on Fritzing data */}
         {connectors.map((connector: any, index: number) => {
-          if (typeof connector.x !== 'number' || typeof connector.y !== 'number') {
-            return null; // Skip pins without valid coordinates
-          }
-          
           // Use actual SVG dimensions from the component data if available
-          const svgNaturalWidth = connector.svgWidth || svgDimensions.width || 72;
-          const svgNaturalHeight = connector.svgHeight || svgDimensions.height || 93.6;
+          const svgNaturalWidth = connector.svgWidth || 72;
+          const svgNaturalHeight = connector.svgHeight || 93.6;
           
           // Scale connector positions to match the component rendered size (64px width)
           const scaleX = 64 / svgNaturalWidth;
@@ -684,9 +668,10 @@ function ComponentInstance({ placedComponent, onMove, onPinClick, onSelect, isSe
                 
                 // Get accurate pin position relative to canvas
                 const canvasRect = canvasRef.current?.getBoundingClientRect();
-                const pinRect = e.currentTarget.getBoundingClientRect();
+                const componentRect = e.currentTarget.closest('.absolute')?.getBoundingClientRect();
                 
-                if (canvasRect && pinRect) {
+                if (canvasRect && componentRect) {
+                  const pinRect = e.currentTarget.getBoundingClientRect();
                   const canvasX = (pinRect.left + pinRect.width / 2 - canvasRect.left) / (zoomLevel / 100);
                   const canvasY = (pinRect.top + pinRect.height / 2 - canvasRect.top) / (zoomLevel / 100);
                   
@@ -707,50 +692,30 @@ function ComponentInstance({ placedComponent, onMove, onPinClick, onSelect, isSe
         {connectors.length === 0 && (
           <>
             <div
-              className="absolute top-1/2 left-0 w-3 h-3 bg-gray-700 rounded-full transform -translate-y-1/2 -translate-x-1/2 connection-pin hover:bg-yellow-400 cursor-pointer"
+              className="absolute top-1/2 left-0 w-3 h-3 bg-gray-600 rounded-full transform -translate-y-1/2 -translate-x-1/2 connection-pin hover:bg-yellow-400 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                
-                // Get accurate pin position relative to canvas
-                const canvasRect = canvasRef.current?.getBoundingClientRect();
-                const pinRect = e.currentTarget.getBoundingClientRect();
-                
-                if (canvasRect && pinRect) {
-                  const canvasX = (pinRect.left + pinRect.width / 2 - canvasRect.left) / (zoomLevel / 100);
-                  const canvasY = (pinRect.top + pinRect.height / 2 - canvasRect.top) / (zoomLevel / 100);
-                  
-                  onPinClick(
-                    placedComponent.id,
-                    'connector0',
-                    canvasX,
-                    canvasY
-                  );
-                }
+                const rect = e.currentTarget.getBoundingClientRect();
+                onPinClick(
+                  placedComponent.id,
+                  'connector0',
+                  rect.left + rect.width / 2,
+                  rect.top + rect.height / 2
+                );
               }}
-              title="Pin 1 - Connection point"
             />
             <div
-              className="absolute top-1/2 right-0 w-3 h-3 bg-gray-700 rounded-full transform -translate-y-1/2 translate-x-1/2 connection-pin hover:bg-yellow-400 cursor-pointer"
+              className="absolute top-1/2 right-0 w-3 h-3 bg-gray-600 rounded-full transform -translate-y-1/2 translate-x-1/2 connection-pin hover:bg-yellow-400 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                
-                // Get accurate pin position relative to canvas
-                const canvasRect = canvasRef.current?.getBoundingClientRect();
-                const pinRect = e.currentTarget.getBoundingClientRect();
-                
-                if (canvasRect && pinRect) {
-                  const canvasX = (pinRect.left + pinRect.width / 2 - canvasRect.left) / (zoomLevel / 100);
-                  const canvasY = (pinRect.top + pinRect.height / 2 - canvasRect.top) / (zoomLevel / 100);
-                  
-                  onPinClick(
-                    placedComponent.id,
-                    'connector1',
-                    canvasX,
-                    canvasY
-                  );
-                }
+                const rect = e.currentTarget.getBoundingClientRect();
+                onPinClick(
+                  placedComponent.id,
+                  'connector1',
+                  rect.left + rect.width / 2,
+                  rect.top + rect.height / 2
+                );
               }}
-              title="Pin 2 - Connection point"
             />
           </>
         )}

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { ZoomIn, ZoomOut, Trash2, RotateCw, Download, Square } from "lucide-react";
 import type { Component, CanvasState } from "../shared/schema";
 import { WireRouter } from "./wire-routing";

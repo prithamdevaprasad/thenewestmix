@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
 import { Search, ChevronDown, ChevronRight, Download } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import type { Component } from "@shared/schema";
+import { apiRequest } from "./queryClient";
+import type { Component } from "../shared/schema";
 
 interface ComponentLibraryProps {
   onComponentDrag: (component: Component) => void;

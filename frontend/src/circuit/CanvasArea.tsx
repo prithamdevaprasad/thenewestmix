@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { ZoomIn, ZoomOut, Trash2, RotateCw, Download, Square } from "lucide-react";
 import type { Component, CanvasState } from "../shared/schema";
-import { WireRouter } from "../lib/wire-routing";
+import { WireRouter } from "./wire-routing";
 
 interface CanvasAreaProps {
   canvasState: CanvasState;
